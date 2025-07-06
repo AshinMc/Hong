@@ -1,0 +1,157 @@
+[gd_scene load_steps=11 format=2]
+
+[ext_resource path="res://Scripts/Player1.gd" type="Script" id=1]
+[ext_resource path="res://Resources/idle.png" type="Texture" id=2]
+[ext_resource path="res://Resources/assets_task_01jycm5afnf9zae18bazefjyg7_1750623012_img_0.webp" type="Texture" id=3]
+
+[sub_resource type="AtlasTexture" id=2]
+flags = 4
+atlas = ExtResource( 2 )
+region = Rect2( 0, 0, 800, 800 )
+
+[sub_resource type="AtlasTexture" id=3]
+flags = 4
+atlas = ExtResource( 2 )
+region = Rect2( 800, 0, 800, 800 )
+
+[sub_resource type="AtlasTexture" id=4]
+flags = 4
+atlas = ExtResource( 2 )
+region = Rect2( 1600, 0, 800, 800 )
+
+[sub_resource type="AtlasTexture" id=5]
+flags = 4
+atlas = ExtResource( 2 )
+region = Rect2( 2400, 0, 800, 800 )
+
+[sub_resource type="SpriteFrames" id=6]
+animations = [ {
+"frames": [ SubResource( 2 ), SubResource( 3 ), SubResource( 4 ), SubResource( 5 ) ],
+"loop": true,
+"name": "idle",
+"speed": 5.0
+} ]
+
+[sub_resource type="Animation" id=7]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 3 ]
+}
+
+[sub_resource type="Animation" id=1]
+resource_name = "idle"
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.2, 0.4, 0.6 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 2, 3 ]
+}
+
+[node name="Player1" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="Character" type="Node2D" parent="."]
+position = Vector2( 399, 305 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="Character"]
+position = Vector2( 3, -5 )
+scale = Vector2( 0.224169, 0.224169 )
+frames = SubResource( 6 )
+animation = "idle"
+frame = 3
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Character"]
+anims/RESET = SubResource( 7 )
+anims/idle = SubResource( 1 )
+
+[node name="Camera2D" type="Camera2D" parent="Character"]
+pause_mode = 2
+physics_interpolation_mode = 2
+position = Vector2( -5, 0 )
+current = true
+limit_smoothed = true
+smoothing_enabled = true
+drag_margin_left = 0.1
+drag_margin_top = 0.1
+drag_margin_right = 0.1
+drag_margin_bottom = 0.1
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="CanvasLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UI"]
+margin_left = 10.0
+margin_top = 10.0
+margin_right = 410.0
+margin_bottom = 40.0
+text = "Connecting to Server.."
+
+[node name="Player2Status" type="Label" parent="CanvasLayer/UI"]
+margin_left = 575.0
+margin_top = 12.0
+margin_right = 784.0
+margin_bottom = 36.0
+align = 2
+
+[node name="ControlsInfo" type="Label" parent="CanvasLayer/UI"]
+margin_left = 646.0
+margin_top = 56.0
+margin_right = 789.0
+margin_bottom = 173.0
+
+[node name="ChatDisplay" type="RichTextLabel" parent="CanvasLayer/UI"]
+margin_left = 10.0
+margin_top = 180.0
+margin_right = 410.0
+margin_bottom = 550.0
+scroll_following = true
+
+[node name="ChatInput" type="LineEdit" parent="CanvasLayer/UI"]
+margin_left = 10.0
+margin_top = 560.0
+margin_right = 310.0
+margin_bottom = 590.0
+
+[node name="SendButton" type="Button" parent="CanvasLayer/UI"]
+margin_left = 320.0
+margin_top = 560.0
+margin_right = 390.0
+margin_bottom = 590.0
+text = "Send"
+
+[node name="BackButton" type="Button" parent="CanvasLayer/UI"]
+margin_left = 720.0
+margin_top = 560.0
+margin_right = 790.0
+margin_bottom = 590.0
+text = "Exit"
+
+[node name="ReconnectTimer" type="Timer" parent="."]
+wait_time = 3.0
+one_shot = true
+
+[node name="Temp_World" type="Sprite" parent="."]
+position = Vector2( 494, 403 )
+z_index = -1
+texture = ExtResource( 3 )
