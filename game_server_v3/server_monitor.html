@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hong Game Live Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .box {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .players {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0;
+        }
+        .player {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 5px;
+            font-weight: bold;
+            width: 100px;
+            text-align: center;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #logMessages {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .move {
+            border-left-color: #007bff;
+            background-color: #e7f5ff;
+        }
+        .action {
+            border-left-color: #fd7e14;
+            background-color: #fff4e6;
+        }
+        .chat {
+            border-left-color: #20c997;
+            background-color: #e6fcf5;
+        }
+        .system {
+            border-left-color: #6c757d;
+            background-color: #f8f9fa;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .connection-status {
+            font-weight: bold;
+            text-align: center;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        .connected-status {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected-status {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        h1, h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Hong Game Live Monitor</h1>
+        <div id="connectionStatus" class="connection-status disconnected-status">
+            Not connected to server
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>Player Status</h2>
+        <div class="players">
+            <div id="player1" class="player disconnected">Player 1</div>
+            <div id="player2" class="player disconnected">Player 2</div>
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>Live Message Log</h2>
+        <div id="logMessages">
+            <div class="message system">
+                <span class="timestamp">[00:00:00]</span>
+                Waiting for server connection...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const player1El = document.getElementById('player1');
+        const player2El = document.getElementById('player2');
+        const logEl = document.getElementById('logMessages');
+        const connectionStatusEl = document.getElementById('connectionStatus');
+        
+        // State
+        let websocket = null;
+        let reconnectInterval = null;
+        let reconnectAttempt = 0;
+        
+        // WebSocket connection
+        function connectToServer() {
+            connectionStatusEl.textContent = "Connecting to server...";
+            connectionStatusEl.className = "connection-status disconnected-status";
+            
+            // Create WebSocket connection
+            websocket = new WebSocket('ws://localhost:8765');
+            
+            websocket.onopen = function() {
+                // Send identification as monitor
+                websocket.send(JSON.stringify({
+                    client_type: 'monitor'
+                }));
+                addLogMessage('System', 'Connected to server');
+                
+                // Reset reconnect attempt counter
+                reconnectAttempt = 0;
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+            
+            websocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+            
+            websocket.onclose = function() {
+                connectionStatusEl.textContent = "Disconnected from server";
+                connectionStatusEl.className = "connection-status disconnected-status";
+                
+                // Update player status
+                player1El.className = "player disconnected";
+                player2El.className = "player disconnected";
+                
+                addLogMessage('System', 'Disconnected from server');
+                
+                // Try to reconnect after delay
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(function() {
+                        reconnectAttempt++;
+                        if (reconnectAttempt <= 10) { // Limit to 10 attempts
+                            addLogMessage('System', `Attempting to reconnect (${reconnectAttempt}/10)...`);
+                            connectToServer();
+                        } else {
+                            addLogMessage('System', 'Failed to reconnect after multiple attempts. Please refresh the page.');
+                            clearInterval(reconnectInterval);
+                        }
+                    }, 5000); // Try every 5 seconds
+                }
+            };
+            
+            websocket.onerror = function(error) {
+                addLogMessage('System', 'WebSocket error');
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function handleServerMessage(data) {
+            // Handle initial connection confirmation
+            if (data.status === 'connected' && data.client_type === 'monitor') {
+                connectionStatusEl.textContent = "Connected to server";
+                connectionStatusEl.className = "connection-status connected-status";
+                
+                // Update initial player status
+                if (data.player1_connected) {
+                    player1El.className = "player connected";
+                }
+                if (data.player2_connected) {
+                    player2El.className = "player connected";
+                }
+                
+                return;
+            }
+            
+            // Handle player connection/disconnection events
+            if (data.monitor_event === 'player_connected') {
+                const player = data.player;
+                if (player === 'player1') {
+                    player1El.className = "player connected";
+                } else if (player === 'player2') {
+                    player2El.className = "player connected";
+                }
+                
+                addLogMessage('Connection', `${player === 'player1' ? 'Player 1' : 'Player 2'} connected`);
+                return;
+            }
+            
+            if (data.monitor_event === 'player_disconnected') {
+                const player = data.player;
+                if (player === 'player1') {
+                    player1El.className = "player disconnected";
+                } else if (player === 'player2') {
+                    player2El.className = "player disconnected";
+                }
+                
+                addLogMessage('Connection', `${player === 'player1' ? 'Player 1' : 'Player 2'} disconnected`);
+                return;
+            }
+            
+            // Handle messages between players
+            if (data.monitor_event === 'message') {
+                const from = data.from === 'player1' ? 'Player 1' : 'Player 2';
+                const to = data.to === 'player1' ? 'Player 1' : 'Player 2';
+                const messageData = data.data;
+                
+                // Handle different message types
+                if (data.message_type === 'action') {
+                    if (messageData.action) {
+                        addLogMessage('Action', `${from} → ${to}: ${messageData.action}`, 'action');
+                    }
+                } else if (data.message_type === 'chat') {
+                    if (messageData.content) {
+                        addLogMessage('Chat', `${from}: "${messageData.content}"`, 'chat');
+                    }
+                } else {
+                    // Other message types
+                    addLogMessage('Other', `${from} → ${to}: ${JSON.stringify(messageData)}`, 'system');
+                }
+                return;
+            }
+            
+            // Fallback for unhandled message types
+            console.log('Unhandled message:', data);
+        }
+        
+        function addLogMessage(type, message, cssClass = 'system') {
+            const now = new Date();
+            const timestamp = now.toTimeString().split(' ')[0];
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${cssClass}`;
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'timestamp';
+            timeSpan.textContent = `[${timestamp}]`;
+            
+            messageDiv.appendChild(timeSpan);
+            messageDiv.appendChild(document.createTextNode(`${message}`));
+            
+            logEl.appendChild(messageDiv);
+            
+            // Auto-scroll to bottom
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // Connect on page load
+        window.addEventListener('load', function() {
+            addLogMessage('System', 'Connecting to game server...');
+            connectToServer();
+        });
+    </script>
+</body>
+</html>
