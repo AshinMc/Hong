@@ -22,7 +22,7 @@ async def handle_client(websocket):
             # Special handling for monitor connections
             if client_type == "monitor":
                 connected["monitors"].append(websocket)
-                print(f"\n🖥️ Monitor connected (Total: {len(connected['monitors'])})")
+                print(f"\n Monitor connected (Total: {len(connected['monitors'])})")
                 # Send connection confirmation
                 await websocket.send(json.dumps({
                     "status": "connected",
