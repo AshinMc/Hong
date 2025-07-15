@@ -11,9 +11,9 @@ start game_server_v3\server_monitor.html
 echo.
 echo Starting Godot Instances...
 rem Replace with your actual Godot executable path
-start "Player 1" ".gitignore\Godot.exe" --path . --position 100,100
+start "Player 1" "godot\Godot.exe" --path . --position 100,100
 timeout /t 2
-start "Player 2" ".gitignore\Godot.exe" --path . --position 800,100
+start "Player 2" "godot\Godot.exe" --path . --position 800,100
 
 echo.
 echo Environment Started! Please connect both players.

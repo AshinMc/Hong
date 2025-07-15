@@ -52,7 +52,6 @@ text = "Find your destination"
 align = 1
 
 [node name="MainMenuBack" type="Sprite" parent="."]
-visible = false
-position = Vector2( 420, 294 )
+position = Vector2( 343, 304 )
 scale = Vector2( 0.589844, 0.589844 )
 texture = ExtResource( 3 )
