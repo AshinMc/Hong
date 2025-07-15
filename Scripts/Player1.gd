@@ -1,7 +1,7 @@
 extends Node2D
 
 # Configuration
-export var server_url = "ws://localhost:8765"
+var server_url = "ws://localhost:8765"  # Will be updated from NetworkConfig
 var player_type = "player1"  # Movement controller
 
 # WebSocket client
@@ -42,7 +42,9 @@ var gui_visible = true
 func _ready():
 	# Set window title
 	OS.set_window_title("Player 1 - Movement Controller")
-	
+	if has_node("/root/NetworkConfig"):
+		server_url = get_node("/root/NetworkConfig").server_url
+		print("Using server URL from NetworkConfig: " + server_url)
 	# Initialize character position
 	
 	

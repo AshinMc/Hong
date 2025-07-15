@@ -51,6 +51,20 @@ margin_bottom = 310.0
 text = "Find your destination"
 align = 1
 
+[node name="ServerStatusLabel" type="Label" parent="CanvasLayer/Control"]
+margin_left = 10.0
+margin_top = 560.0
+margin_right = 610.0
+margin_bottom = 590.0
+text = "Server: Searching.."
+
+[node name="DiscoverButton" type="Button" parent="CanvasLayer/Control"]
+margin_left = 620.0
+margin_top = 560.0
+margin_right = 790.0
+margin_bottom = 590.0
+text = "Discover Server"
+
 [node name="MainMenuBack" type="Sprite" parent="."]
 position = Vector2( 343, 304 )
 scale = Vector2( 0.589844, 0.589844 )

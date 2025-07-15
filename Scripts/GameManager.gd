@@ -1,7 +1,7 @@
 extends Node
 
-# Server configuration
-var server_url = "ws://localhost:8765"
+# Use the URL from NetworkConfig instead of hardcoding it
+var server_url = "ws://localhost:8765"  # Default, will be updated
 
 # Current player type
 var current_player = ""
@@ -9,6 +9,10 @@ var current_player = ""
 func _ready():
 	# Add input map entries
 	_setup_input_maps()
+	
+	# Get server URL from NetworkConfig if available
+	if has_node("/root/NetworkConfig"):
+		server_url = get_node("/root/NetworkConfig").server_url
 
 # Helper function to go back to main menu
 func go_to_main_menu():

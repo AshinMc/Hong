@@ -37,6 +37,9 @@ var player1_connected = false
 var gui_visible = true
 
 func _ready():
+	if has_node("/root/NetworkConfig"):
+		server_url = get_node("/root/NetworkConfig").server_url
+		print("Using server URL from NetworkConfig: " + server_url)
 	# Set window title
 	OS.set_window_title("Player 2 - Action Controller")
 	
