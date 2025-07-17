@@ -25,6 +25,7 @@
 
 ## 🔍 Overview
 
-Hong is a two player one character Godot game concept built with Godot 3.6. It provides both a mini server for casual gameplay and a full server solution for debugging environments.
+Hong is a two player one character Godot game concept built with Godot 3.6.
 
-## Under Development
+
+#### Under Development...
