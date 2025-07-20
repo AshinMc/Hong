@@ -2,7 +2,7 @@ extends Node2D
 
 func _ready():
 	# Set window title
-	OS.set_window_title("Kong Game")
+	OS.set_window_title("Hong")
 	
 	# Center the buttons
 	$CanvasLayer/Control/TitleLabel.rect_position.x = (get_viewport_rect().size.x - $CanvasLayer/Control/TitleLabel.rect_size.x) / 2

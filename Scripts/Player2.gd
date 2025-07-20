@@ -116,16 +116,52 @@ func check_for_messages():
 		if data[0] == OK:
 			_buffer += data[1].get_string_from_utf8()
 			
-			# Look for complete JSON objects
-			while _buffer.find("}") != -1:
-				var end_pos = _buffer.find("}") + 1
-				var json_str = _buffer.substr(0, end_pos)
-				_buffer = _buffer.substr(end_pos)
+			# IMPROVED JSON PARSING - find complete JSON objects by counting braces
+			var start_pos = 0
+			var brace_count = 0
+			var in_string = false
+			var escape_next = false
+			
+			for i in range(_buffer.length()):
+				var c = _buffer[i]
 				
-				# Try to parse the JSON
-				var parse_result = JSON.parse(json_str)
-				if parse_result.error == OK:
-					process_message(parse_result.result)
+				# Handle string literals and escaping
+				if c == '"' and not escape_next:
+					in_string = not in_string
+				
+				# Only count braces outside of strings
+				if not in_string:
+					if c == '{':
+						if brace_count == 0:
+							start_pos = i
+						brace_count += 1
+					elif c == '}':
+						brace_count -= 1
+						
+						# Complete JSON object found
+						if brace_count == 0:
+							var json_str = _buffer.substr(start_pos, i - start_pos + 1)
+							
+							# Try to parse the JSON
+							var parse_result = JSON.parse(json_str)
+							if parse_result.error == OK:
+								process_message(parse_result.result)
+							else:
+								print("JSON Parse Error: ", parse_result.error)
+							
+							# Remove processed part from buffer
+							if i + 1 < _buffer.length():
+								_buffer = _buffer.substr(i + 1)
+								i = -1  # Reset loop (will become 0 on next iteration)
+							else:
+								_buffer = ""
+								break
+				
+				# Handle escape sequences
+				if c == '\\' and not escape_next:
+					escape_next = true
+				else:
+					escape_next = false
 
 func process_message(data):
 	# Handle connection status
@@ -143,18 +179,18 @@ func process_message(data):
 			player1_status.text = "Player 1 disconnected"
 			player1_status.add_color_override("font_color", Color(1, 0.5, 0.5))
 	
-	# Handle sync data from Player 1
-	if data.has("sync") and data.sender == "player1":
-		character_position.x = data.position.x
-		character_position.y = data.position.y
+	# Handle position data from Player 1
+	if data.has("sender") and data.sender == "player1" and data.has("position"):
+		# Extract position
+		var new_pos_x = data.position.x
+		var new_pos_y = data.position.y
+		
+		# Update our character
+		character_position = Vector2(new_pos_x, new_pos_y)
 		character.position = character_position
-		play_animation(data.animation)
-	
-	# Handle position updates from Player 1
-	if (data.has("position_update") or data.has("action") and data.has("position")) and data.sender == "player1":
-		character_position.x = data.position.x
-		character_position.y = data.position.y
-		character.position = character_position
+		
+		# Status update for debugging
+		status_label.text = "Pos: " + str(int(new_pos_x)) + "," + str(int(new_pos_y))
 		
 		# Update animation based on movement
 		if data.has("action") and data.action.begins_with("move_"):
@@ -167,8 +203,8 @@ func process_message(data):
 			elif data.action == "move_right":
 				if character.has_node("AnimatedSprite"):
 					character.get_node("AnimatedSprite").flip_h = false
-		elif data.has("animation"):
-			play_animation(data.animation)
+		elif current_animation == "walk":
+			play_animation("idle")
 	
 	# Handle own action animations
 	if data.has("action") and data.sender == "player2":

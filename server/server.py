@@ -1,6 +1,7 @@
 import socket
 import json
 import select
+import time
 
 class KongGame:
     def __init__(self):
@@ -28,6 +29,7 @@ class KongGame:
                 if sock == server:
                     client, addr = server.accept()
                     print(f"New connection from {addr}")
+                    time.sleep(0.1) # delay for idk
                     sockets_list.append(client)
                 # Existing connection has data
                 else:
@@ -59,12 +61,12 @@ class KongGame:
                     print("Player 1 connected")
                     # Send confirmation
                     response = {"status": "connected", "client_type": "player1"}
-                    client.send(json.dumps(response).encode('utf-8'))
+                    client.send((json.dumps(response) + "\n").encode('utf-8'))
                     
                     # Notify player2 if connected
                     if self.player2:
                         notify = {"event": "client_connected", "client": "player1"}
-                        self.player2.send(json.dumps(notify).encode('utf-8'))
+                        self.player2.send((json.dumps(response) + "\n").encode('utf-8'))
                         
                 elif client_type == "player2" and not self.player2:
                     self.player2 = client
@@ -72,17 +74,17 @@ class KongGame:
                     print("Player 2 connected")
                     # Send confirmation
                     response = {"status": "connected", "client_type": "player2"}
-                    client.send(json.dumps(response).encode('utf-8'))
+                    client.send((json.dumps(response) + "\n").encode('utf-8'))
                     
                     # Notify player1 if connected
                     if self.player1:
                         notify = {"event": "client_connected", "client": "player2"}
-                        self.player1.send(json.dumps(notify).encode('utf-8'))
+                        self.player1.send((json.dumps(response) + "\n").encode('utf-8'))
                         
                 else:
                     # Player slot already taken
                     error_msg = {"error": "Player slot already taken"}
-                    client.send(json.dumps(error_msg).encode('utf-8'))
+                    client.send((json.dumps(response) + "\n").encode('utf-8'))
                     client.close()
                     sockets_list.remove(client)
                     return
@@ -92,10 +94,19 @@ class KongGame:
                 client_type = self.client_types[client]
                 message["sender"] = client_type
                 
+                 # Debug position messages
+                if "position" in message:
+                    print(f"Forwarding position from {client_type}: {message['position']}")
+           
+                # In process_client_message, modify how you send messages:
                 if client_type == "player1" and self.player2:
-                    self.player2.send(json.dumps(message).encode('utf-8'))
+                    # Add a newline as message delimiter
+                    json_str = json.dumps(message) + "\n"
+                    self.player2.send(json_str.encode('utf-8'))
                 elif client_type == "player2" and self.player1:
-                    self.player1.send(json.dumps(message).encode('utf-8'))
+                    # Add a newline as message delimiter
+                    json_str = json.dumps(message) + "\n"
+                    self.player1.send(json_str.encode('utf-8'))
                     
         except Exception as e:
             print(f"Error: {e}")
